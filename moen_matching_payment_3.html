@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Pros Are Matched and Paid</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; padding: 2rem; color: #1a1a1a; font-size: 16px; }
+  .container { max-width: 700px; margin: 0 auto; }
+
+  h1 { font-size: 24px; font-weight: 500; margin-bottom: 8px; }
+  .subtitle { font-size: 16px; color: #666; margin-bottom: 2rem; line-height: 1.6; }
+
+  .section-label { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #009FD9; margin-bottom: 8px; }
+  .section-heading { font-size: 19px; font-weight: 500; margin-bottom: 6px; color: #1a1a1a; }
+  .section-sub { font-size: 15px; color: #666; margin-bottom: 1.25rem; line-height: 1.6; }
+
+  /* ── MATCHING TIMELINE ── */
+  .timeline-wrap { margin-bottom: 2rem; }
+
+  .match-steps { display: flex; flex-direction: column; }
+
+  .match-step { display: flex; gap: 0; cursor: pointer; }
+
+  .step-left { display: flex; flex-direction: column; align-items: center; width: 52px; flex-shrink: 0; }
+
+  .step-icon {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+    border: 2px solid #e0e0e0; background: #fff; color: #bbb;
+    transition: background 0.25s, border-color 0.25s, color 0.25s;
+    position: relative; z-index: 1;
+  }
+
+  .step-line { width: 2px; flex: 1; background: #e0e0e0; min-height: 16px; transition: background 0.3s; }
+
+  .match-step.active .step-icon  { background: #009FD9; border-color: #009FD9; color: #fff; }
+  .match-step.done .step-icon    { background: #009FD9; border-color: #009FD9; color: #fff; }
+  .match-step.active-v1 .step-icon { background: #3B6D11; border-color: #3B6D11; color: #fff; }
+  .match-step.done-v1 .step-icon   { background: #3B6D11; border-color: #3B6D11; color: #fff; }
+  .match-step.active-fall .step-icon { background: #854F0B; border-color: #854F0B; color: #fff; }
+  .match-step.done-fall .step-icon   { background: #854F0B; border-color: #854F0B; color: #fff; }
+
+  .match-step.done .step-line    { background: #009FD9; }
+  .match-step.done-v1 .step-line { background: #3B6D11; }
+
+  .step-right { padding: 6px 0 20px 16px; flex: 1; }
+
+  .step-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+  .step-tag { font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: #009FD9; margin-bottom: 3px; }
+  .match-step.active-v1 .step-tag,
+  .match-step.done-v1 .step-tag  { color: #3B6D11; }
+  .match-step.active-fall .step-tag,
+  .match-step.done-fall .step-tag { color: #854F0B; }
+
+  .step-title { font-size: 16px; font-weight: 500; color: #1a1a1a; margin-bottom: 4px; }
+
+  .step-chevron { font-size: 18px; color: #bbb; transition: transform 0.25s; flex-shrink: 0; margin-right: 4px; }
+  .match-step.active .step-chevron,
+  .match-step.done .step-chevron,
+  .match-step.active-v1 .step-chevron,
+  .match-step.done-v1 .step-chevron,
+  .match-step.active-fall .step-chevron,
+  .match-step.done-fall .step-chevron { transform: rotate(180deg); color: #666; }
+
+  .step-detail {
+    font-size: 15px; color: #555; line-height: 1.65;
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s;
+    opacity: 0;
+  }
+
+  .match-step.active .step-detail,
+  .match-step.done .step-detail,
+  .match-step.active-v1 .step-detail,
+  .match-step.done-v1 .step-detail,
+  .match-step.active-fall .step-detail,
+  .match-step.done-fall .step-detail { max-height: 300px; opacity: 1; }
+
+  .step-badge { display: inline-block; font-size: 13px; font-weight: 600; padding: 3px 10px; border-radius: 20px; margin-top: 8px; }
+  .badge-blue  { background: #E6F1FB; color: #185FA5; }
+  .badge-green { background: #EAF3DE; color: #3B6D11; }
+  .badge-amber { background: #FAEEDA; color: #854F0B; }
+
+  /* hint text on collapsed steps */
+  .step-hint { font-size: 13px; color: #aaa; margin-top: 2px; display: block; }
+  .match-step.active .step-hint,
+  .match-step.done .step-hint,
+  .match-step.active-v1 .step-hint,
+  .match-step.done-v1 .step-hint,
+  .match-step.active-fall .step-hint,
+  .match-step.done-fall .step-hint { display: none; }
+
+  .next-step-btn {
+    display: inline-flex; margin-top: 1rem; padding: 9px 22px;
+    background: #009FD9; color: #fff; border: none; border-radius: 8px;
+    font-size: 15px; font-weight: 500; cursor: pointer;
+    align-items: center; gap: 6px; transition: background 0.15s;
+  }
+  .next-step-btn:hover { background: #007DB3; }
+  .next-step-btn.done-all { background: #3B6D11; cursor: default; }
+
+  /* completion banner */
+  .section-complete {
+    display: none; background: #EAF3DE; border: 0.5px solid #97C459;
+    border-radius: 10px; padding: 12px 16px; margin-top: 1rem;
+    font-size: 15px; color: #27500A;
+    align-items: center; gap: 10px;
+  }
+  .section-complete.show { display: flex; }
+  .section-complete i { font-size: 20px; flex-shrink: 0; }
+
+  .divider { border: none; border-top: 1.5px dashed #ccc; margin: 2rem 0; }
+
+  /* ── PAYOUT LOOKUP ── */
+  .selector-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1.25rem; }
+
+  .selector-group label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .selector-group select {
+    width: 100%; padding: 11px 14px; border: 0.5px solid #ddd;
+    border-radius: 8px; background: #fff; font-size: 15px;
+    color: #1a1a1a; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center;
+    cursor: pointer; transition: border-color 0.15s;
+  }
+  .selector-group select:focus { outline: none; border-color: #009FD9; }
+
+  .payout-result {
+    background: #fff; border: 0.5px solid #ddd; border-radius: 12px;
+    padding: 1.5rem; min-height: 110px;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.3s;
+  }
+  .payout-result.has-result { border-color: #009FD9; align-items: flex-start; }
+
+  .payout-placeholder { font-size: 15px; color: #aaa; text-align: center; }
+
+  .payout-display { display: none; width: 100%; }
+  .payout-display.show { display: block; }
+
+  .payout-install-type { font-size: 13px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: #009FD9; margin-bottom: 8px; }
+
+  .payout-amount-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 16px; }
+  .payout-amount { font-size: 40px; font-weight: 500; color: #3B6D11; }
+  .payout-label { font-size: 15px; color: #666; }
+
+  .payout-breakdown { background: #f5f5f5; border-radius: 8px; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .breakdown-row { display: flex; justify-content: space-between; font-size: 14px; color: #444; }
+  .breakdown-row.total { border-top: 0.5px solid #ddd; padding-top: 8px; margin-top: 2px; font-weight: 500; font-size: 15px; color: #1a1a1a; }
+
+  .payout-complete {
+    display: none; background: #EAF3DE; border: 0.5px solid #97C459;
+    border-radius: 10px; padding: 12px 16px; margin-top: 1rem;
+    font-size: 15px; color: #27500A;
+    align-items: center; gap: 10px;
+  }
+  .payout-complete.show { display: flex; }
+  .payout-complete i { font-size: 20px; flex-shrink: 0; }
+
+  .payout-notes { margin-top: 1.25rem; display: flex; flex-direction: column; gap: 10px; }
+  .payout-note { font-size: 15px; color: #555; display: flex; align-items: flex-start; gap: 10px; line-height: 1.6; }
+  .payout-note i { font-size: 17px; flex-shrink: 0; margin-top: 2px; color: #009FD9; }
+
+  .pending-note {
+    font-size: 13px; color: #854F0B; background: #FAEEDA;
+    border-radius: 8px; padding: 8px 12px; margin-top: 10px;
+    border-left: 3px solid #854F0B; border-top-left-radius: 0; border-bottom-left-radius: 0;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>How pros are matched and paid</h1>
+  <p class="subtitle">Work through the matching flow, then use the payout lookup to find the correct amount for any install type.</p>
+
+  <!-- ── MATCHING FLOW ── -->
+  <div class="timeline-wrap">
+    <p class="section-label">Part 1 — Pro matching</p>
+    <p class="section-heading">How a pro is found for a job</p>
+    <p class="section-sub">Select each step to expand it, or use the Next button to move through in order.</p>
+
+    <div class="match-steps" id="matchSteps">
+
+      <div class="match-step" id="ms0" onclick="toggleStep(0)">
+        <div class="step-left">
+          <div class="step-icon"><i class="ti ti-mail" aria-hidden="true"></i></div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-right">
+          <div class="step-header">
+            <div>
+              <div class="step-tag">Step 1 — Automated claiming</div>
+              <div class="step-title">Email and SMS sent simultaneously</div>
+              <span class="step-hint">Select to expand</span>
+            </div>
+            <i class="ti ti-chevron-down step-chevron" aria-hidden="true"></i>
+          </div>
+          <div class="step-detail">
+            The Ops team sends a job offer email and SMS to all eligible pros at the same time using the Google Groups account. Only job details and zip code are shared — no customer PII at this stage.
+            <div><span class="step-badge badge-blue">First to reply claims the job</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="match-step" id="ms1" onclick="toggleStep(1)">
+        <div class="step-left">
+          <div class="step-icon"><i class="ti ti-clock" aria-hidden="true"></i></div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-right">
+          <div class="step-header">
+            <div>
+              <div class="step-tag">6-hour window</div>
+              <div class="step-title">Waiting for a claim</div>
+              <span class="step-hint">Select to expand</span>
+            </div>
+            <i class="ti ti-chevron-down step-chevron" aria-hidden="true"></i>
+          </div>
+          <div class="step-detail">
+            If a pro replies via email or SMS within 6 hours, they claim the job. All other pros are immediately notified the job is no longer available. If no one replies within 6 hours, the team moves to manual calling.
+            <div><span class="step-badge badge-blue">All other pros notified when claimed</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="match-step" id="ms2" onclick="toggleStep(2)">
+        <div class="step-left">
+          <div class="step-icon"><i class="ti ti-phone" aria-hidden="true"></i></div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-right">
+          <div class="step-header">
+            <div>
+              <div class="step-tag">Step 2 — Manual calling (fallback)</div>
+              <div class="step-title">Team calls pros individually</div>
+              <span class="step-hint">Select to expand</span>
+            </div>
+            <i class="ti ti-chevron-down step-chevron" aria-hidden="true"></i>
+          </div>
+          <div class="step-detail">
+            If no pro claims within 6 hours, the Ops team begins calling pros from the list one by one. Share only job details and zip code — no customer PII. Ask if they want to claim and confirm a timeframe.
+            <div><span class="step-badge badge-green">First to accept on the phone claims the job</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="match-step" id="ms3" onclick="toggleStep(3)">
+        <div class="step-left">
+          <div class="step-icon"><i class="ti ti-arrow-back" aria-hidden="true"></i></div>
+          <div class="step-line" style="background:transparent;"></div>
+        </div>
+        <div class="step-right">
+          <div class="step-header">
+            <div>
+              <div class="step-tag">Fallback — no pro available</div>
+              <div class="step-title">Job referred back to Moen</div>
+              <span class="step-hint">Select to expand</span>
+            </div>
+            <i class="ti ti-chevron-down step-chevron" aria-hidden="true"></i>
+          </div>
+          <div class="step-detail">
+            If no pro is found after exhausting all options including Moen's Pro Finder Tool, the job is referred back to Moen. The customer is informed they will need to hire their own licensed plumber. Moen reimburses the customer directly.
+            <div><span class="step-badge badge-amber">Refer back to Moen</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <button class="next-step-btn" id="matchNextBtn" onclick="advanceMatch()">
+      Next step <i class="ti ti-arrow-right" aria-hidden="true"></i>
+    </button>
+
+    <div class="section-complete" id="matchComplete">
+      <i class="ti ti-circle-check" aria-hidden="true"></i>
+      All four matching steps covered. Move on to the payout lookup below.
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ── PAYOUT LOOKUP ── -->
+  <div>
+    <p class="section-label">Part 2 — Payout lookup</p>
+    <p class="section-heading">Find the correct payout for any install</p>
+    <p class="section-sub">Select a pipe size and install type to see the correct pro payout.</p>
+
+    <div class="selector-row">
+      <div class="selector-group">
+        <label for="pipeSize">Pipe size</label>
+        <select id="pipeSize" onchange="updatePayout()">
+          <option value="">Select pipe size</option>
+          <option value="small">¾" or 1"</option>
+          <option value="large">1-¼" or 1-½"</option>
+        </select>
+      </div>
+      <div class="selector-group">
+        <label for="installType">Install type</label>
+        <select id="installType" onchange="updatePayout()">
+          <option value="">Select install type</option>
+          <option value="regular">Regular</option>
+          <option value="premium">Premium</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="payout-result" id="payoutResult">
+      <div class="payout-placeholder" id="payoutPlaceholder">
+        <i class="ti ti-hand-click" style="font-size:28px; display:block; margin-bottom:10px; color:#bbb;" aria-hidden="true"></i>
+        Select a pipe size and install type above
+      </div>
+      <div class="payout-display" id="payoutDisplay">
+        <div class="payout-install-type" id="payoutInstallLabel"></div>
+        <div class="payout-amount-row">
+          <div class="payout-amount" id="payoutAmount"></div>
+          <div class="payout-label">pro payout</div>
+        </div>
+        <div class="payout-breakdown">
+          <div class="breakdown-row">
+            <span>Thumbtack gross revenue per job</span>
+            <span style="color:#009FD9;">$30</span>
+          </div>
+          <div class="breakdown-row total">
+            <span>Pro payout</span>
+            <span id="proTotal"></span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="payout-complete" id="payoutComplete">
+      <i class="ti ti-circle-check" aria-hidden="true"></i>
+      You've used the payout lookup. Remember — Thumbtack always keeps $30 regardless of install type.
+    </div>
+
+    <div class="payout-notes">
+      <div class="payout-note">
+        <i class="ti ti-info-circle" aria-hidden="true"></i>
+        <span><strong>Premium vs. regular:</strong> Premium installs are used when there is not enough straight pipe for inline installation. The pro diagnoses this on-site and confirms via a photo before proceeding.</span>
+      </div>
+      <div class="payout-note">
+        <i class="ti ti-info-circle" aria-hidden="true"></i>
+        <span><strong>Trip fee:</strong> If the pro cannot complete the install due to an inaccessible site, they receive a <strong>$30 trip fee</strong>. Moen reimburses Thumbtack for this amount. This is separate from the $30 Thumbtack gross revenue per job.</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const payouts = {
+    small:  { regular: 250, premium: 350 },
+    large:  { regular: 300, premium: 400 }
+  };
+
+  const labels = {
+    small:  { regular: '¾" or 1" Regular Installation',        premium: '¾" or 1" Premium Installation'        },
+    large:  { regular: '1-¼" or 1-½" Regular Installation',    premium: '1-¼" or 1-½" Premium Installation'    }
+  };
+
+  let payoutUsed = false;
+
+  function updatePayout() {
+    const size = document.getElementById('pipeSize').value;
+    const type = document.getElementById('installType').value;
+    const placeholder = document.getElementById('payoutPlaceholder');
+    const display = document.getElementById('payoutDisplay');
+    const resultBox = document.getElementById('payoutResult');
+
+    if (!size || !type) {
+      placeholder.style.display = 'flex';
+      placeholder.style.flexDirection = 'column';
+      placeholder.style.alignItems = 'center';
+      display.className = 'payout-display';
+      resultBox.classList.remove('has-result');
+      return;
+    }
+
+    const amount = payouts[size][type];
+    document.getElementById('payoutInstallLabel').textContent = labels[size][type];
+    document.getElementById('payoutAmount').textContent = '$' + amount;
+    document.getElementById('proTotal').textContent = '$' + amount;
+
+    placeholder.style.display = 'none';
+    display.className = 'payout-display show';
+    resultBox.classList.add('has-result');
+
+    if (!payoutUsed) {
+      payoutUsed = true;
+      document.getElementById('payoutComplete').classList.add('show');
+    }
+  }
+
+  // ── MATCHING FLOW ──
+  const totalSteps = 4;
+  let matchCurrent = -1;
+  let allDone = false;
+
+  const activeClasses = ['active', 'active', 'active-v1', 'active-fall'];
+  const doneClasses   = ['done',   'done',   'done-v1',   'done-fall'];
+
+  function clearStep(idx) {
+    const el = document.getElementById('ms' + idx);
+    el.classList.remove('active', 'done', 'active-v1', 'done-v1', 'active-fall', 'done-fall');
+  }
+
+  function setActive(idx) {
+    clearStep(idx);
+    document.getElementById('ms' + idx).classList.add(activeClasses[idx]);
+  }
+
+  function setDone(idx) {
+    clearStep(idx);
+    document.getElementById('ms' + idx).classList.add(doneClasses[idx]);
+  }
+
+  function toggleStep(idx) {
+    const el = document.getElementById('ms' + idx);
+    const isExpanded = el.classList.contains('active') ||
+                       el.classList.contains('done') ||
+                       el.classList.contains('active-v1') ||
+                       el.classList.contains('done-v1') ||
+                       el.classList.contains('active-fall') ||
+                       el.classList.contains('done-fall');
+
+    if (isExpanded) {
+      clearStep(idx);
+    } else {
+      // mark all previous as done, this one as active
+      for (let i = 0; i < idx; i++) setDone(i);
+      setActive(idx);
+      if (idx > matchCurrent) matchCurrent = idx;
+      updateNextBtn();
+    }
+  }
+
+  function advanceMatch() {
+    if (allDone) return;
+    const next = matchCurrent + 1;
+    if (next >= totalSteps) return;
+
+    for (let i = 0; i < next; i++) setDone(i);
+    setActive(next);
+    matchCurrent = next;
+    updateNextBtn();
+  }
+
+  function updateNextBtn() {
+    const btn = document.getElementById('matchNextBtn');
+    if (matchCurrent >= totalSteps - 1) {
+      allDone = true;
+      btn.innerHTML = 'All steps complete <i class="ti ti-check" aria-hidden="true"></i>';
+      btn.className = 'next-step-btn done-all';
+      btn.onclick = null;
+      document.getElementById('matchComplete').classList.add('show');
+    } else {
+      btn.innerHTML = 'Next step <i class="ti ti-arrow-right" aria-hidden="true"></i>';
+    }
+  }
+
+  // Open step 1 on load
+  setActive(0);
+  matchCurrent = 0;
+</script>
+</body>
+</html>
