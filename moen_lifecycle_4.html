@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How a Moen Job Works</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; padding: 2rem; color: #1a1a1a; }
+  .container { max-width: 700px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 6px; }
+  .subtitle { font-size: 15px; color: #666; margin-bottom: 1.5rem; line-height: 1.6; }
+
+  .start-block {
+    background: #fff; border: 0.5px solid #ddd; border-radius: 12px;
+    padding: 1.25rem 1.5rem; margin-bottom: 1.75rem;
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  }
+  .start-block p { font-size: 14px; color: #444; line-height: 1.6; }
+
+  .start-btn {
+    padding: 10px 24px; background: #009FD9; color: #fff; border: none;
+    border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer;
+    white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;
+    flex-shrink: 0; transition: background 0.15s;
+  }
+  .start-btn:hover { background: #007DB3; }
+  .start-btn:disabled { background: #b0d8ee; cursor: default; }
+
+  .phase-legend { display: flex; gap: 16px; margin-bottom: 1.75rem; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #555; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  .progress-wrap { margin-bottom: 1.75rem; }
+  .progress-bar-track { height: 4px; background: #e0e0e0; border-radius: 4px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: #009FD9; border-radius: 4px; transition: width 0.4s ease; width: 0%; }
+  .progress-label { font-size: 12px; color: #999; margin-top: 6px; }
+
+  .phase-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; margin-top: 4px; opacity: 0; transition: opacity 0.4s; }
+  .phase-header.visible { opacity: 1; }
+  .phase-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .phase-line { flex: 1; height: 1px; background: #e0e0e0; }
+
+  /* timeline collapse */
+  #timelineWrap {
+    overflow: hidden;
+    max-height: 5000px;
+    opacity: 1;
+    transition: max-height 0.6s ease, opacity 0.4s ease;
+  }
+  #timelineWrap.collapsed { max-height: 0; opacity: 0; pointer-events: none; }
+
+  .timeline { position: relative; padding-left: 52px; }
+  .timeline::before { content: ''; position: absolute; left: 20px; top: 0; bottom: 0; width: 2px; background: #e0e0e0; border-radius: 2px; }
+  .stage { position: relative; margin-bottom: 4px; }
+
+  .stage-node {
+    position: absolute; left: -52px; top: 14px;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #fff; border: 2px solid #e0e0e0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: #ccc; z-index: 1;
+    transition: background 0.35s, border-color 0.35s, color 0.35s;
+  }
+  .stage.revealed .stage-node { color: #fff; }
+  .stage.phase-customer.revealed .stage-node { background: #185FA5; border-color: #185FA5; }
+  .stage.phase-matching.revealed .stage-node { background: #3B6D11; border-color: #3B6D11; }
+  .stage.phase-install.revealed  .stage-node { background: #854F0B; border-color: #854F0B; }
+
+  .stage-content {
+    background: #fff; border: 0.5px solid #ddd; border-radius: 12px;
+    padding: 1rem 1.25rem; margin-bottom: 12px;
+    opacity: 0; transform: translateY(10px);
+    transition: opacity 0.35s, transform 0.35s; pointer-events: none;
+  }
+  .stage.revealed .stage-content { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .stage.phase-customer.revealed .stage-content { border-left: 3px solid #185FA5; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+  .stage.phase-matching.revealed .stage-content { border-left: 3px solid #3B6D11; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+  .stage.phase-install.revealed  .stage-content { border-left: 3px solid #854F0B; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+
+  .stage-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .stage-icon-wrap { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+  .phase-customer .stage-icon-wrap { background: #E6F1FB; color: #185FA5; }
+  .phase-matching .stage-icon-wrap { background: #EAF3DE; color: #3B6D11; }
+  .phase-install  .stage-icon-wrap { background: #FAEEDA; color: #854F0B; }
+
+  .stage-title { font-size: 15px; font-weight: 600; }
+  .phase-customer .stage-title { color: #185FA5; }
+  .phase-matching .stage-title { color: #3B6D11; }
+  .phase-install  .stage-title { color: #854F0B; }
+  .stage-desc { font-size: 14px; color: #444; line-height: 1.65; margin-left: 42px; }
+
+  .next-btn {
+    display: none; margin: 0 0 1rem 0; padding: 8px 20px;
+    background: #009FD9; color: #fff; border: none; border-radius: 8px;
+    font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s;
+  }
+  .next-btn:hover { background: #007DB3; }
+  .next-btn.show { display: inline-flex; align-items: center; gap: 6px; }
+
+  .section-divider { border: none; border-top: 1.5px dashed #ccc; margin: 2.5rem 0; display: none; }
+
+  /* review banner */
+  .review-banner {
+    display: none;
+    background: #fff;
+    border: 0.5px solid #ddd;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .review-banner.show { display: flex; }
+  .review-banner p { font-size: 14px; color: #444; line-height: 1.5; }
+  .review-banner p strong { color: #1a1a1a; }
+
+  .review-btn {
+    padding: 8px 16px; background: transparent; color: #009FD9;
+    border: 0.5px solid #009FD9; border-radius: 8px; font-size: 13px;
+    font-weight: 500; cursor: pointer; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 6px;
+    flex-shrink: 0; transition: background 0.15s;
+  }
+  .review-btn:hover { background: #f0f9ff; }
+
+  #part2 { display: none; }
+  .part-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #009FD9; margin-bottom: 6px; }
+  .part-heading { font-size: 17px; font-weight: 500; margin-bottom: 0.5rem; }
+  .sort-intro { font-size: 15px; color: #444; margin-bottom: 1.25rem; line-height: 1.6; }
+
+  .sort-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .sort-item {
+    background: #fff; border: 0.5px solid #ddd; border-radius: 10px;
+    padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+    cursor: grab; transition: border-color 0.15s, opacity 0.15s;
+    font-size: 14px; color: #1a1a1a; line-height: 1.4;
+  }
+  .sort-item:active { cursor: grabbing; }
+  .sort-item.dragging  { opacity: 0.35; }
+  .sort-item.drag-over { border-color: #009FD9; background: #f0f9ff; }
+  .sort-item.correct-sort { border-color: #3B6D11; background: #EAF3DE; }
+  .sort-item.wrong-sort   { border-color: #d85a30; background: #FAECE7; }
+
+  .sort-handle { color: #bbb; font-size: 18px; flex-shrink: 0; }
+  .sort-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: #f0f0f0; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; color: #666; flex-shrink: 0;
+    transition: background 0.2s, color 0.2s;
+  }
+  .sort-item.correct-sort .sort-num { background: #3B6D11; color: #fff; }
+  .sort-item.wrong-sort   .sort-num { background: #d85a30; color: #fff; }
+
+  .sort-icon-wrap { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+  .sort-text { flex: 1; }
+  .sort-title { font-weight: 600; margin-bottom: 2px; }
+  .sort-desc  { font-size: 13px; color: #666; }
+
+  .sort-actions { display: flex; gap: 10px; margin-top: 1.25rem; }
+  .check-btn {
+    padding: 9px 22px; background: #009FD9; color: #fff;
+    border: none; border-radius: 8px; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .check-btn:hover { background: #007DB3; }
+  .check-btn:disabled { background: #b0d8ee; cursor: default; }
+
+  .reset-btn {
+    padding: 9px 18px; background: transparent; color: #666;
+    border: 0.5px solid #ccc; border-radius: 8px; font-size: 14px;
+    cursor: pointer; transition: border-color 0.15s;
+  }
+  .reset-btn:hover { border-color: #999; }
+
+  .sort-result {
+    margin-top: 1rem; padding: 12px 16px; border-radius: 10px;
+    font-size: 14px; line-height: 1.6; display: none;
+  }
+  .sort-result.show { display: block; }
+  .sort-result.all-correct { background: #EAF3DE; color: #3B6D11; border: 0.5px solid #c0dd97; }
+  .sort-result.some-wrong  { background: #FAEEDA; color: #854F0B; border: 0.5px solid #fac775; }
+  .result-icon { font-size: 18px; vertical-align: -3px; margin-right: 6px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>How a Moen job works</h1>
+  <p class="subtitle">A Moen job moves through three phases and eight stages. Press <strong>Start</strong> to walk through each one.</p>
+
+  <div class="start-block">
+    <p>Select <strong>Start</strong> to begin. Each stage will reveal one at a time — select <strong>Next</strong> to continue through the full lifecycle.</p>
+    <button class="start-btn" id="startBtn" onclick="beginReveal()">
+      Start <i class="ti ti-arrow-right" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <div class="phase-legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#185FA5;"></div><span>Phase 1 — Customer</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#3B6D11;"></div><span>Phase 2 — Matching</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#854F0B;"></div><span>Phase 3 — Installation &amp; Close</span></div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-bar-track"><div class="progress-bar-fill" id="progressFill"></div></div>
+    <p class="progress-label" id="progressLabel">Step 0 of 8</p>
+  </div>
+
+  <div id="timelineWrap">
+    <div id="part1">
+      <div class="phase-header" id="ph1">
+        <div class="phase-pill" style="background:#E6F1FB; color:#185FA5;"><i class="ti ti-user" aria-hidden="true"></i> Phase 1 — Customer</div>
+        <div class="phase-line"></div>
+      </div>
+
+      <div class="timeline" id="timeline">
+
+        <div class="stage phase-customer" id="s1">
+          <div class="stage-node"><i class="ti ti-sparkles" aria-hidden="true"></i></div>
+          <div class="stage-content">
+            <div class="stage-header"><div class="stage-icon-wrap"><i class="ti ti-sparkles" aria-hidden="true"></i></div><p class="stage-title">Lead generated</p></div>
+            <p class="stage-desc">Moen sends a customer who has purchased a Moen Flo device and needs installation. The Ops team receives the customer's details.</p>
+          </div>
+        </div>
+
+        <div class="stage phase-customer" id="s2">
+          <div class="stage-node"><i class="ti ti-phone" aria-hidden="true"></i></div>
+          <div class="stage-content">
+            <div class="stage-header"><div class="stage-icon-wrap"><i class="ti ti-phone" aria-hidden="true"></i></div><p class="stage-title">Customer outreach</p></div>
+            <p class="stage-desc">The Ops team contacts the customer to confirm their details and collect three preferred scheduling dates and times.</p>
+          </div>
+        </div>
+
+        <div class="stage phase-customer" id="s3">
+          <div class="stage-node"><i class="ti ti-clipboard-check" aria-hidden="true"></i></div>
+          <div class="stage-content">
+            <div class="stage-header"><div class="stage-icon-wrap"><i class="ti ti-clipboard-check" aria-hidden="true"></i></div><p class="stage-title">Qualification</p></div>
+            <p class="stage-desc">The agent walks through the qualification criteria — property type, smartphone, shutoff valve, pipe material, Wi-Fi, and electrical outlet — to confirm the installation is feasible.</p>
+          </div>
+        </div>
+
+        <div class="phase-header" id="ph2">
+          <div class="phase-pill" style="background:#EAF3DE; color:#3B6D11;"><i class="ti ti-users" aria-hidden="true"></i> Phase 2 — Matching</div>
+          <div class="phase-line"></div>
+        </div>
+
+        <div class="stage phase-matching" id="s4">
+          <div class="stage-node"><i class="ti ti-mail" aria-hidden="true"></i></div>
+          <div class="stage-content">
+            <div class="stage-header"><div class="stage-icon-wrap"><i class="ti ti-mail" aria-hidden="true"></i></div><p class="stage-title">Pro matching</p></div>
+            <p class="stage-desc">The Ops team contacts eligible pros via email and SMS simultaneously (automated claiming). The first pro to reply claims the job. If no pro claims within 6 hours, the team calls pros individually from the list (manual calling).</p>
+          </div>
+        </div>
+
+        <div class="stage phase-matching" id="s5">
+          <div class="stage-node"><i class="ti ti-user-check" aria-hidden="true"></i></div>
+          <div class="stage-content">
+            <div class="stage-header"><div class="stage-icon-wrap"><i class="ti ti-user-check" aria-hidden="true"></i></div><p class="stage-title">Assignment</p></div>
+            <p class="stage-desc">The job is assigned to the claiming pro via the Admin panel using the pro's business PK. Both the pro and the customer receive a confirmation email.</p>
+          </div>
+        </div>
+
+        <div class="phase-header" id="ph3">
+          <div class="phase-pill" style="background:#FAEEDA; color:#854F0B;"><i class="ti ti-tool" aria-hidden="true"></i> Phase 3 — Installation &amp; Close</div>
+          <div class="phase-line"></div>
+        </div>
+
+        <div class="stage phase-install" id="s6">
+          <div class="stage-node"><i class="ti ti-tool" aria-hidden="true"></i></div>
+          <div class="stage-content">
+            <div class="stage-header"><div class="stage-icon-wrap"><i class="ti ti-tool" aria-hidden="true"></i></div><p class="stage-title">Install</p></div>
+            <p class="stage-desc">The pro completes the installation and submits before-and-after photos and an invoice to the Ops team. The Ops team checks that the photo matches the invoiced install type.</p>
+          </div>
+        </div>
+
+        <div class="stage phase-install" id="s7">
+          <div class="stage-node"><i class="ti ti-coin" aria-hidden="true"></i></div>
+          <div class="stage-content">
+            <div class="stage-header"><div class="stage-icon-wrap"><i class="ti ti-coin" aria-hidden="true"></i></div><p class="stage-title">Payment</p></div>
+            <p class="stage-desc">The Ops team verifies the install type, updates the payout amount in Admin, and triggers payment to the pro. Payment is deposited within 3–5 business days.</p>
+          </div>
+        </div>
+
+        <div class="stage phase-install" id="s8">
+          <div class="stage-node"><i class="ti ti-circle-check" aria-hidden="true"></i></div>
+          <div class="stage-content">
+            <div class="stage-header"><div class="stage-icon-wrap"><i class="ti ti-circle-check" aria-hidden="true"></i></div><p class="stage-title">Completion</p></div>
+            <p class="stage-desc">The job is marked complete in Admin. A completion email goes to Moen. A follow-up survey goes to the customer. If no response within 72 hours, the job is still marked complete.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-divider" id="divider">
+
+  <!-- review banner — hidden until after first attempt -->
+  <div class="review-banner" id="reviewBanner">
+    <p>Want to check something? <strong>Review the lifecycle</strong> before trying again.</p>
+    <button class="review-btn" id="reviewBtn" onclick="toggleReview()">
+      Review lifecycle <i class="ti ti-chevron-down" id="reviewChevron" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <div id="part2">
+    <p class="part-label">Part 2 of 2</p>
+    <p class="part-heading">Now put it in order</p>
+    <p class="sort-intro">Try to put the 8 stages in the correct order from memory. Drag them into position, then select <strong>Check my order</strong>. You'll be able to review the lifecycle after your first attempt.</p>
+
+    <ul class="sort-list" id="sortList"></ul>
+
+    <div class="sort-actions">
+      <button class="check-btn" id="checkBtn" onclick="checkOrder()">Check my order</button>
+      <button class="reset-btn" id="resetBtn" onclick="resetSort()" style="display:none;">Try again</button>
+    </div>
+
+    <div class="sort-result" id="sortResult"></div>
+  </div>
+
+</div>
+
+<script>
+  const stages = [
+    { id:'s1', num:1, phase:'customer', icon:'ti-sparkles',       title:'Lead generated',    desc:'Moen sends a customer who purchased a Moen Flo device and needs installation.' },
+    { id:'s2', num:2, phase:'customer', icon:'ti-phone',           title:'Customer outreach', desc:'The Ops team contacts the customer to confirm details and collect scheduling preferences.' },
+    { id:'s3', num:3, phase:'customer', icon:'ti-clipboard-check', title:'Qualification',     desc:'The agent confirms the installation is feasible using the qualification criteria.' },
+    { id:'s4', num:4, phase:'matching', icon:'ti-mail',            title:'Pro matching',      desc:'Eligible pros are contacted simultaneously. First to reply claims the job. After 6 hours, manual calling begins.' },
+    { id:'s5', num:5, phase:'matching', icon:'ti-user-check',      title:'Assignment',        desc:'The job is assigned to the claiming pro via the Admin panel.' },
+    { id:'s6', num:6, phase:'install',  icon:'ti-tool',            title:'Install',           desc:'The pro completes the installation and submits photos and an invoice.' },
+    { id:'s7', num:7, phase:'install',  icon:'ti-coin',            title:'Payment',           desc:'The Ops team verifies the install, updates the payout in Admin, and triggers payment.' },
+    { id:'s8', num:8, phase:'install',  icon:'ti-circle-check',    title:'Completion',        desc:'The job is marked complete, a completion email goes to Moen, and a survey goes to the customer.' },
+  ];
+
+  const phaseColors = {
+    customer: { bg:'#E6F1FB', color:'#185FA5' },
+    matching: { bg:'#EAF3DE', color:'#3B6D11' },
+    install:  { bg:'#FAEEDA', color:'#854F0B' },
+  };
+
+  const revealOrder = ['s1','s2','s3','ph2','s4','s5','ph3','s6','s7','s8','done'];
+  let step = 0;
+  let started = false;
+  let firstAttemptDone = false;
+  let reviewOpen = false;
+
+  function updateProgress(n) {
+    document.getElementById('progressFill').style.width = Math.round((n/8)*100)+'%';
+    document.getElementById('progressLabel').textContent = 'Step '+n+' of 8';
+  }
+
+  function beginReveal() {
+    if (started) return;
+    started = true;
+    const btn = document.getElementById('startBtn');
+    btn.disabled = true;
+    btn.style.opacity = '0.4';
+    document.getElementById('ph1').classList.add('visible');
+    revealStep();
+  }
+
+  function revealStep() {
+    const id = revealOrder[step];
+    if (id === 'done') { launchPart2(); return; }
+
+    if (id === 'ph2' || id === 'ph3') {
+      document.getElementById(id).classList.add('visible');
+      step++;
+      revealStep();
+      return;
+    }
+
+    const el = document.getElementById(id);
+    if (el) el.classList.add('revealed');
+
+    const stageNum = parseInt(id.replace('s',''));
+    updateProgress(stageNum);
+    step++;
+
+    const next = revealOrder[step];
+
+    if (next === 'done') {
+      const btn = document.createElement('button');
+      btn.className = 'next-btn show';
+      btn.innerHTML = 'Go to part 2 <i class="ti ti-arrow-right" aria-hidden="true"></i>';
+      btn.onclick = launchPart2;
+      btn.style.marginTop = '0.5rem';
+      document.getElementById('timeline').appendChild(btn);
+      return;
+    }
+
+    const nb = document.createElement('button');
+    nb.className = 'next-btn show temp-next';
+    nb.innerHTML = 'Next <i class="ti ti-arrow-right" aria-hidden="true"></i>';
+    nb.onclick = function() {
+      document.querySelectorAll('.temp-next').forEach(b => b.remove());
+      revealStep();
+    };
+    el.appendChild(nb);
+  }
+
+  function launchPart2() {
+    // collapse timeline for retrieval challenge
+    document.getElementById('timelineWrap').classList.add('collapsed');
+    document.getElementById('divider').style.display = 'block';
+    const p2 = document.getElementById('part2');
+    p2.style.display = 'block';
+    buildSortList();
+    setTimeout(() => p2.scrollIntoView({ behavior:'smooth', block:'start' }), 100);
+  }
+
+  function toggleReview() {
+    reviewOpen = !reviewOpen;
+    const wrap = document.getElementById('timelineWrap');
+    const btn  = document.getElementById('reviewBtn');
+    const chev = document.getElementById('reviewChevron');
+    if (reviewOpen) {
+      wrap.classList.remove('collapsed');
+      btn.innerHTML = 'Hide lifecycle <i class="ti ti-chevron-up" id="reviewChevron" aria-hidden="true"></i>';
+      document.getElementById('timelineWrap').scrollIntoView({ behavior:'smooth', block:'start' });
+    } else {
+      wrap.classList.add('collapsed');
+      btn.innerHTML = 'Review lifecycle <i class="ti ti-chevron-down" id="reviewChevron" aria-hidden="true"></i>';
+    }
+  }
+
+  let dragSrc = null;
+
+  function buildSortList() {
+    const list = document.getElementById('sortList');
+    list.innerHTML = '';
+    document.getElementById('sortResult').className = 'sort-result';
+    document.getElementById('checkBtn').disabled = false;
+    document.getElementById('checkBtn').style.display = 'inline-flex';
+
+    let items = [...stages];
+    for (let i = items.length-1; i > 0; i--) {
+      const j = Math.floor(Math.random()*(i+1));
+      [items[i],items[j]] = [items[j],items[i]];
+    }
+    const sorted = items.every((item,idx) => item.num === idx+1);
+    if (sorted) { [items[0],items[1]] = [items[1],items[0]]; }
+
+    items.forEach((stage, idx) => {
+      const c = phaseColors[stage.phase];
+      const li = document.createElement('li');
+      li.className = 'sort-item';
+      li.draggable = true;
+      li.dataset.num = stage.num;
+      li.innerHTML = `
+        <i class="ti ti-grip-vertical sort-handle" aria-hidden="true"></i>
+        <div class="sort-num">${idx+1}</div>
+        <div class="sort-icon-wrap" style="background:${c.bg}; color:${c.color};">
+          <i class="ti ${stage.icon}" aria-hidden="true"></i>
+        </div>
+        <div class="sort-text">
+          <div class="sort-title" style="color:${c.color};">${stage.title}</div>
+          <div class="sort-desc">${stage.desc}</div>
+        </div>
+      `;
+      li.addEventListener('dragstart', onDragStart);
+      li.addEventListener('dragover',  onDragOver);
+      li.addEventListener('dragleave', onDragLeave);
+      li.addEventListener('drop',      onDrop);
+      li.addEventListener('dragend',   onDragEnd);
+      list.appendChild(li);
+    });
+  }
+
+  function updateNums() {
+    document.querySelectorAll('#sortList .sort-item').forEach((li,i) => {
+      li.querySelector('.sort-num').textContent = i+1;
+    });
+  }
+
+  function onDragStart(e) { dragSrc = this; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+  function onDragOver(e)  { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; this.classList.add('drag-over'); }
+  function onDragLeave()  { this.classList.remove('drag-over'); }
+  function onDrop(e) {
+    e.stopPropagation();
+    if (dragSrc !== this) {
+      const list  = document.getElementById('sortList');
+      const items = Array.from(list.children);
+      const si    = items.indexOf(dragSrc);
+      const ti    = items.indexOf(this);
+      list.insertBefore(dragSrc, si < ti ? this.nextSibling : this);
+      updateNums();
+    }
+    this.classList.remove('drag-over');
+  }
+  function onDragEnd() {
+    document.querySelectorAll('.sort-item').forEach(li => li.classList.remove('dragging','drag-over'));
+    dragSrc = null;
+  }
+
+  function checkOrder() {
+    const items = Array.from(document.querySelectorAll('#sortList .sort-item'));
+    let correct = 0;
+    items.forEach((li,i) => {
+      li.classList.remove('correct-sort','wrong-sort');
+      if (parseInt(li.dataset.num) === i+1) { li.classList.add('correct-sort'); correct++; }
+      else { li.classList.add('wrong-sort'); }
+    });
+
+    const r = document.getElementById('sortResult');
+    r.classList.add('show');
+
+    // after first attempt: show review banner and try again button
+    if (!firstAttemptDone) {
+      firstAttemptDone = true;
+      document.getElementById('reviewBanner').classList.add('show');
+      document.getElementById('resetBtn').style.display = 'inline-flex';
+    }
+
+    if (correct === 8) {
+      r.className = 'sort-result show all-correct';
+      r.innerHTML = '<i class="ti ti-circle-check result-icon" aria-hidden="true"></i><strong>Perfect.</strong> You have the full lifecycle in the correct order across all three phases.';
+      document.getElementById('checkBtn').disabled = true;
+    } else {
+      r.className = 'sort-result show some-wrong';
+      r.innerHTML = '<i class="ti ti-alert-circle result-icon" aria-hidden="true"></i><strong>'+correct+' of 8 correct.</strong> The highlighted stages are out of order. Review the lifecycle above if you need to, then drag them into the right position and try again.';
+    }
+  }
+
+  function resetSort() {
+    // collapse review if open before reshuffling
+    if (reviewOpen) {
+      reviewOpen = false;
+      document.getElementById('timelineWrap').classList.add('collapsed');
+      document.getElementById('reviewBtn').innerHTML = 'Review lifecycle <i class="ti ti-chevron-down" id="reviewChevron" aria-hidden="true"></i>';
+    }
+    buildSortList();
+    document.getElementById('sortResult').className = 'sort-result';
+  }
+
+  updateProgress(0);
+</script>
+</body>
+</html>
