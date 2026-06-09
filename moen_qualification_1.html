@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moen Pre-Qualification Questions</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; padding: 2rem; color: #1a1a1a; }
+  .container { max-width: 680px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 6px; }
+  .subtitle { font-size: 15px; color: #666; margin-bottom: 1.5rem; line-height: 1.6; }
+
+  .progress-wrap { margin-bottom: 1.5rem; }
+  .progress-dots { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #ddd; transition: background 0.3s; flex-shrink: 0; }
+  .dot.active { background: #009FD9; }
+  .dot.correct { background: #3B6D11; }
+  .dot.wrong { background: #A32D2D; }
+  .progress-label { font-size: 12px; color: #999; }
+
+  .card {
+    background: #fff; border: 0.5px solid #ddd; border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+  }
+
+  .eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; color: #009FD9; margin-bottom: 6px;
+  }
+
+  .rule-title { font-size: 16px; font-weight: 500; color: #1a1a1a; margin-bottom: 8px; line-height: 1.4; }
+
+  .rule-detail { font-size: 13px; color: #555; line-height: 1.65; margin-bottom: 12px; }
+
+  .tip {
+    font-size: 13px; color: #0C447C; background: #E6F1FB;
+    border-left: 3px solid #185FA5; border-top-left-radius: 0; border-bottom-left-radius: 0;
+    border-radius: 6px; padding: 8px 12px; margin-bottom: 14px; line-height: 1.55;
+    display: none;
+  }
+
+  .divider { height: 0.5px; background: #eee; margin: 14px 0; }
+
+  .scenario-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; color: #999; margin-bottom: 6px;
+  }
+
+  .scenario {
+    font-size: 14px; color: #333; line-height: 1.65;
+    font-style: italic; margin-bottom: 16px;
+  }
+
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .ans-btn {
+    flex: 1; min-width: 120px; padding: 10px 14px;
+    border: 0.5px solid #ddd; border-radius: 8px;
+    background: #fff; color: #1a1a1a;
+    font-size: 14px; font-weight: 500; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .ans-btn:hover:not(:disabled) { border-color: #009FD9; background: #f0f9ff; }
+  .ans-btn:disabled { opacity: 0.45; cursor: default; }
+  .ans-btn.sel-yes { border-color: #3B6D11; background: #EAF3DE; color: #3B6D11; }
+  .ans-btn.sel-no  { border-color: #A32D2D; background: #FCEBEB; color: #A32D2D; }
+  .ans-btn.sel-mid { border-color: #854F0B; background: #FAEEDA; color: #854F0B; }
+
+  .feedback {
+    border-radius: 8px; padding: 10px 14px; margin-top: 12px;
+    font-size: 14px; line-height: 1.6; display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct   { background: #EAF3DE; color: #27500A; border: 0.5px solid #97C459; }
+  .feedback.incorrect { background: #FCEBEB; color: #791F1F; border: 0.5px solid #F09595; }
+  .feedback.partial   { background: #FAEEDA; color: #633806; border: 0.5px solid #FAC775; }
+
+  .next-btn {
+    display: none; margin-top: 12px; padding: 8px 20px;
+    background: #009FD9; color: #fff; border: none; border-radius: 8px;
+    font-size: 14px; font-weight: 500; cursor: pointer;
+    align-items: center; gap: 6px;
+    transition: background 0.15s;
+  }
+  .next-btn:hover { background: #007DB3; }
+  .next-btn.show { display: inline-flex; }
+
+  /* result */
+  .result {
+    border-radius: 12px; padding: 1.25rem 1.5rem; display: none;
+  }
+  .result.show { display: block; }
+  .result.perfect    { background: #EAF3DE; border: 0.5px solid #97C459; }
+  .result.needs-work { background: #FAEEDA; border: 0.5px solid #FAC775; }
+
+  .result-title {
+    font-size: 16px; font-weight: 500; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .result.perfect    .result-title { color: #3B6D11; }
+  .result.needs-work .result-title { color: #854F0B; }
+
+  .result-body { font-size: 14px; line-height: 1.6; }
+  .result.perfect    .result-body { color: #27500A; }
+  .result.needs-work .result-body { color: #633806; }
+
+  .missed-list { margin-top: 10px; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .missed-item {
+    font-size: 13px; color: #633806;
+    display: flex; align-items: flex-start; gap: 6px; line-height: 1.5;
+  }
+  .missed-item i { font-size: 15px; flex-shrink: 0; margin-top: 1px; color: #854F0B; }
+
+  .restart-btn {
+    margin-top: 14px; padding: 8px 20px;
+    background: #009FD9; color: #fff; border: none; border-radius: 8px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background 0.15s;
+  }
+  .restart-btn:hover { background: #007DB3; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>Pre-qualification questions</h1>
+  <p class="subtitle">Each screen shows you the rule, then a customer scenario. Read the rule, then decide how to respond.</p>
+
+  <div class="progress-wrap">
+    <div class="progress-dots" id="dots"></div>
+    <p class="progress-label" id="progLabel">Question 1 of 7</p>
+  </div>
+
+  <div class="card" id="mainCard">
+    <div class="eyebrow" id="eyebrow"></div>
+    <div class="rule-title" id="ruleTitle"></div>
+    <div class="rule-detail" id="ruleDetail"></div>
+    <div class="tip" id="tip"></div>
+    <div class="divider"></div>
+    <div class="scenario-label">Customer scenario</div>
+    <div class="scenario" id="scenario"></div>
+    <div class="btn-row" id="btnRow"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next-btn" id="nextBtn" onclick="nextStep()">
+      Next question <i class="ti ti-arrow-right" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <div class="result" id="result">
+    <div class="result-title" id="resultTitle"></div>
+    <div class="result-body" id="resultBody"></div>
+    <ul class="missed-list" id="missedList"></ul>
+    <button class="restart-btn" onclick="restart()">
+      <i class="ti ti-refresh" aria-hidden="true"></i> Try again
+    </button>
+  </div>
+
+</div>
+
+<script>
+const questions = [
+  {
+    eyebrow: "Pre-qualification 1 — Property type",
+    rule: "The address must be a house — not an apartment or shared unit.",
+    detail: "Shared units and apartments are not eligible. The Moen Flo is installed on the main water line, which in shared buildings serves multiple units and cannot be modified by a single resident.",
+    tip: null,
+    scenario: "\"The customer confirms they live in a two-bedroom apartment in a building with six units.\"",
+    buttons: [
+      { label: "Qualifies", icon: "ti-check", key: "yes" },
+      { label: "Does not qualify", icon: "ti-x", key: "no" }
+    ],
+    correct: "no",
+    feedback: {
+      yes: { type: "incorrect", text: "Not quite — apartments and shared units are not eligible regardless of other factors. This customer does not qualify on property type." },
+      no:  { type: "correct",  text: "Correct — apartments and shared units are disqualifying. Inform the customer and refer them back to Moen for next steps." }
+    },
+    missLabel: "Property type — apartments and shared units are not eligible, only single-family houses."
+  },
+  {
+    eyebrow: "Pre-qualification 2 — Smartphone",
+    rule: "The customer must have a smartphone — or someone in their household who will be present during installation must have one.",
+    detail: "The Moen app is required to connect the device to Wi-Fi, complete setup, and enable remote monitoring. If the customer doesn't have a smartphone, any household member with one who will be present during installation can fulfill this requirement.",
+    tip: null,
+    scenario: "\"The customer says they don't personally have a smartphone, but their daughter lives with them and has an iPhone she'll have with her during the install.\"",
+    buttons: [
+      { label: "Qualifies", icon: "ti-check", key: "yes" },
+      { label: "Does not qualify", icon: "ti-x", key: "no" }
+    ],
+    correct: "yes",
+    feedback: {
+      yes: { type: "correct",  text: "Correct — a household member's smartphone is sufficient. The daughter's iPhone qualifies on this criterion." },
+      no:  { type: "incorrect", text: "Not quite — the customer doesn't need to personally own a smartphone. Any household member with a smartphone who will be present qualifies." }
+    },
+    missLabel: "Smartphone — any household member's smartphone qualifies, not just the customer's own device."
+  },
+  {
+    eyebrow: "Pre-qualification 3 — Shutoff valve",
+    rule: "The main water shutoff valve must be accessible and above ground.",
+    detail: "If the customer isn't sure where their shutoff valve is, walk them through common locations: inside the house — garage, water heater closet, under the kitchen sink, utility closet. Outside — water meter box, exterior wall, irrigation box.",
+    tip: null,
+    scenario: "\"The customer isn't sure where their shutoff valve is. After walking through common locations, they find it in the garage — accessible and above ground.\"",
+    buttons: [
+      { label: "Qualifies", icon: "ti-check", key: "yes" },
+      { label: "Does not qualify", icon: "ti-x", key: "no" }
+    ],
+    correct: "yes",
+    feedback: {
+      yes: { type: "correct",  text: "Correct — an accessible, above-ground valve qualifies. Move to the next question." },
+      no:  { type: "incorrect", text: "Not quite — once located, an accessible above-ground valve in the garage qualifies. Disqualification applies only when the valve is underground or genuinely inaccessible." }
+    },
+    missLabel: "Shutoff valve — walk customers through common locations before disqualifying. Accessible and above-ground qualifies."
+  },
+  {
+    eyebrow: "Pre-qualification 4 — Pipe material",
+    rule: "The main water line must be copper, PEX, or another compatible material — not galvanized steel.",
+    detail: "Galvanized steel is not compatible with the Moen Flo device. Use the magnet test to help the customer identify their pipe material if they are unsure.",
+    tip: "Magnet test: ask the customer to hold a magnet to the pipe. If the magnet sticks — it's galvanized steel and the install is not qualified. If it falls off or doesn't stick — the material is likely compatible and you can proceed.",
+    scenario: "\"The customer is unsure about their pipe type. You walk them through the magnet test. They report that the magnet does not stick to the pipe.\"",
+    buttons: [
+      { label: "Qualifies", icon: "ti-check", key: "yes" },
+      { label: "Does not qualify", icon: "ti-x", key: "no" }
+    ],
+    correct: "yes",
+    feedback: {
+      yes: { type: "correct",  text: "Correct — the magnet not sticking indicates the pipe is not galvanized steel. The customer qualifies on pipe material." },
+      no:  { type: "incorrect", text: "Not quite — the magnet not sticking means the pipe is not galvanized steel, which means it's likely compatible. The customer qualifies on this criterion." }
+    },
+    missLabel: "Pipe material — magnet doesn't stick = compatible material = qualifies. Magnet sticks = galvanized steel = does not qualify."
+  },
+  {
+    eyebrow: "Pre-qualification 5 — Wi-Fi",
+    rule: "There must be a Wi-Fi signal near the shutoff valve. The connection must be 2.4GHz — the Moen Flo cannot locate 5GHz-only networks.",
+    detail: "Ask the customer to check their Wi-Fi signal near the shutoff valve using their phone or a tablet. If they have a router that only broadcasts 5GHz, the device won't connect even if the signal is strong.",
+    tip: null,
+    scenario: "\"The customer confirms there is strong Wi-Fi near the valve. When you ask about the network type, they say their router only broadcasts on 5GHz and cannot be set to 2.4GHz.\"",
+    buttons: [
+      { label: "Qualifies", icon: "ti-check", key: "yes" },
+      { label: "Does not qualify", icon: "ti-x", key: "no" },
+      { label: "Qualifies with note", icon: "ti-alert-circle", key: "mid" }
+    ],
+    correct: "no",
+    feedback: {
+      yes: { type: "incorrect", text: "Not quite — strong signal alone isn't enough. The Moen Flo requires a 2.4GHz connection. A 5GHz-only router means the device cannot connect, so this customer does not qualify." },
+      no:  { type: "correct",  text: "Correct — a 5GHz-only network disqualifies the installation. The Moen Flo cannot locate 5GHz networks. Inform the customer and refer back to Moen." },
+      mid: { type: "incorrect", text: "Not quite — this isn't a proceed-with-a-note situation. A 5GHz-only router means the Moen Flo cannot connect at all, which is a disqualifying condition." }
+    },
+    missLabel: "Wi-Fi — signal must be 2.4GHz. A 5GHz-only router disqualifies the installation even if the signal is strong."
+  },
+  {
+    eyebrow: "Pre-qualification 6 — Electrical outlet",
+    rule: "There must be a working outlet within 30 feet — or the customer must be willing to purchase Moen extension cords. Up to four cords (25 feet each) can be connected, reaching up to 100 feet.",
+    detail: "If the customer is willing to purchase cords on the day of the call, you can proceed with scheduling. If they want to order first and call back, that is fine too — do not schedule until cords are in hand. Non-Moen cords are acceptable as long as they meet the spec.",
+    tip: null,
+    scenario: "\"There is no outlet within 30 feet. The customer says they are not willing to purchase extension cords and do not want to have an outlet installed by an electrician.\"",
+    buttons: [
+      { label: "Qualifies", icon: "ti-check", key: "yes" },
+      { label: "Does not qualify", icon: "ti-x", key: "no" },
+      { label: "Qualifies with note", icon: "ti-alert-circle", key: "mid" }
+    ],
+    correct: "no",
+    feedback: {
+      yes: { type: "incorrect", text: "Not quite — without an outlet within reach and no willingness to purchase cords or install one, the installation cannot proceed. This customer does not qualify." },
+      no:  { type: "correct",  text: "Correct — no outlet, no cords, no electrician means the installation cannot proceed. Inform the customer and refer back to Moen." },
+      mid: { type: "incorrect", text: "Not quite — there is no workaround available here. Without a reachable outlet and no willingness to address it, this is a clean disqualification." }
+    },
+    missLabel: "Electrical outlet — no outlet + no willingness to purchase cords or install one = does not qualify."
+  },
+  {
+    eyebrow: "Pre-qualification 7 — Outlet edge case",
+    rule: "If the customer has no outlet within 30 feet but is willing to purchase Moen extension cords, you can proceed with scheduling — as long as the outlet is within 100 feet total.",
+    detail: "Each Moen extension cord is 25 feet long and up to four can be connected together. If the customer is willing to purchase them on the day of the call, proceed to scheduling. Non-Moen cords are acceptable if the customer prefers another brand.",
+    tip: null,
+    scenario: "\"There is no outlet within 30 feet but the customer says they have an outlet about 60 feet away and are happy to order Moen extension cords today before the appointment is scheduled.\"",
+    buttons: [
+      { label: "Qualifies — proceed", icon: "ti-check", key: "yes" },
+      { label: "Does not qualify", icon: "ti-x", key: "no" },
+      { label: "Qualifies — call back when cords arrive", icon: "ti-clock", key: "mid" }
+    ],
+    correct: "yes",
+    feedback: {
+      yes: { type: "correct",  text: "Correct — the outlet is within 100 feet and the customer is willing to purchase cords today. You can proceed with scheduling." },
+      no:  { type: "incorrect", text: "Not quite — the outlet is within 100 feet (reachable with cords) and the customer is willing to purchase today. This qualifies. The installation can be scheduled." },
+      mid: { type: "partial",  text: "Close — calling back once cords arrive is one approach, but it's not required here. Since the customer is willing to purchase today and the outlet is within range, you can proceed with scheduling now." }
+    },
+    missLabel: "Outlet edge case — willing to purchase cords today + outlet within 100 feet = proceed with scheduling now."
+  }
+];
+
+let current = 0;
+let answered = false;
+let missed = [];
+
+function buildDots() {
+  const wrap = document.getElementById('dots');
+  wrap.innerHTML = '';
+  questions.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.id = 'dot' + i;
+    wrap.appendChild(d);
+  });
+}
+
+function updateDots() {
+  questions.forEach((_, i) => {
+    const d = document.getElementById('dot' + i);
+    if (i < current) {
+      d.className = missed.includes(i) ? 'dot wrong' : 'dot correct';
+    } else if (i === current) {
+      d.className = 'dot active';
+    } else {
+      d.className = 'dot';
+    }
+  });
+}
+
+function render() {
+  answered = false;
+  const q = questions[current];
+
+  document.getElementById('eyebrow').textContent = q.eyebrow;
+  document.getElementById('ruleTitle').textContent = q.rule;
+  document.getElementById('ruleDetail').textContent = q.detail;
+
+  const tipEl = document.getElementById('tip');
+  if (q.tip) { tipEl.textContent = q.tip; tipEl.style.display = 'block'; }
+  else { tipEl.style.display = 'none'; }
+
+  document.getElementById('scenario').textContent = q.scenario;
+  document.getElementById('progLabel').textContent = 'Question ' + (current + 1) + ' of ' + questions.length;
+
+  const btnRow = document.getElementById('btnRow');
+  btnRow.innerHTML = '';
+  q.buttons.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'ans-btn';
+    btn.id = 'btn-' + b.key;
+    btn.innerHTML = '<i class="ti ' + b.icon + '" aria-hidden="true"></i>' + b.label;
+    btn.onclick = () => answer(b.key);
+    btnRow.appendChild(btn);
+  });
+
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').textContent = '';
+  const nb = document.getElementById('nextBtn');
+  nb.className = 'next-btn';
+  nb.innerHTML = current === questions.length - 1
+    ? 'See result <i class="ti ti-arrow-right" aria-hidden="true"></i>'
+    : 'Next question <i class="ti ti-arrow-right" aria-hidden="true"></i>';
+
+  document.getElementById('mainCard').style.display = 'block';
+  document.getElementById('result').className = 'result';
+  updateDots();
+}
+
+function answer(key) {
+  if (answered) return;
+  answered = true;
+
+  const q = questions[current];
+  const isCorrect = key === q.correct;
+  if (!isCorrect) missed.push(current);
+
+  document.querySelectorAll('.ans-btn').forEach(b => b.disabled = true);
+  const selBtn = document.getElementById('btn-' + key);
+  if (key === 'yes') selBtn.className = 'ans-btn sel-yes';
+  else if (key === 'no') selBtn.className = 'ans-btn sel-no';
+  else selBtn.className = 'ans-btn sel-mid';
+
+  const fb = q.feedback[key];
+  const fbEl = document.getElementById('feedback');
+  fbEl.textContent = fb.text;
+  fbEl.className = 'feedback show ' + fb.type;
+
+  document.getElementById('nextBtn').className = 'next-btn show';
+}
+
+function nextStep() {
+  const d = document.getElementById('dot' + current);
+  d.className = missed.includes(current) ? 'dot wrong' : 'dot correct';
+
+  if (current === questions.length - 1) {
+    showResult();
+    return;
+  }
+  current++;
+  render();
+}
+
+function showResult() {
+  document.getElementById('mainCard').style.display = 'none';
+  document.getElementById('progLabel').textContent = 'All ' + questions.length + ' complete';
+  questions.forEach((_, i) => {
+    document.getElementById('dot' + i).className = missed.includes(i) ? 'dot wrong' : 'dot correct';
+  });
+
+  const r = document.getElementById('result');
+  const title = document.getElementById('resultTitle');
+  const body = document.getElementById('resultBody');
+  const list = document.getElementById('missedList');
+  list.innerHTML = '';
+
+  if (missed.length === 0) {
+    r.className = 'result show perfect';
+    title.innerHTML = '<i class="ti ti-circle-check" style="font-size:20px;" aria-hidden="true"></i> All seven correct';
+    body.textContent = "You correctly identified how each pre-qualification question applies. You're ready to work through a real qualification call.";
+  } else {
+    r.className = 'result show needs-work';
+    title.innerHTML = '<i class="ti ti-alert-circle" style="font-size:20px;" aria-hidden="true"></i> ' + missed.length + ' of ' + questions.length + ' need review';
+    body.textContent = 'Review the criteria below, then try again:';
+    missed.forEach(idx => {
+      const li = document.createElement('li');
+      li.className = 'missed-item';
+      li.innerHTML = '<i class="ti ti-arrow-right" aria-hidden="true"></i>' + questions[idx].missLabel;
+      list.appendChild(li);
+    });
+  }
+}
+
+function restart() {
+  current = 0;
+  missed = [];
+  buildDots();
+  render();
+}
+
+buildDots();
+render();
+</script>
+</body>
+</html>
